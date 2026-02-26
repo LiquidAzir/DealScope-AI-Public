@@ -171,11 +171,10 @@ class GraphAgent:
                             """
                             MERGE (tgt:Company {name: $target})
                             MERGE (acq:Company {name: $acquirer})
-                            MERGE (acq)-[:ACQUIRED {
-                                year: $year,
-                                deal_size: $deal_size,
-                                implied_multiple: $implied_multiple
-                            }]->(tgt)
+                            MERGE (acq)-[r:ACQUIRED]->(tgt)
+                            SET r.year = CASE WHEN $year IS NOT NULL THEN $year ELSE r.year END,
+                                r.deal_size = CASE WHEN $deal_size IS NOT NULL THEN $deal_size ELSE r.deal_size END,
+                                r.implied_multiple = CASE WHEN $implied_multiple IS NOT NULL THEN $implied_multiple ELSE r.implied_multiple END
                             """,
                             target=acq.target,
                             acquirer=acq.acquirer,

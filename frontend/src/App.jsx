@@ -8,18 +8,71 @@ import RedFlags from './components/RedFlags.jsx'
 import AcquirerRank from './components/AcquirerRank.jsx'
 import { useSSE } from './hooks/useSSE.js'
 
+// ── Tab definitions with inline SVG icons ──────────────────────────────────────
+
 const TABS = [
-  { id: 'memo',      label: 'Memo',      icon: '📝' },
-  { id: 'graph',     label: 'Graph',     icon: '🕸️' },
-  { id: 'comps',     label: 'Comps',     icon: '📊' },
-  { id: 'risks',     label: 'Risks',     icon: '🚨' },
-  { id: 'acquirers', label: 'Acquirers', icon: '🎯' },
+  {
+    id: 'memo',
+    label: 'Memo',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="1" width="10" height="12" rx="1.5"/>
+        <path d="M4.5 4.5h5M4.5 7h5M4.5 9.5h3"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'graph',
+    label: 'Graph',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+        <circle cx="7" cy="7" r="1.75"/>
+        <circle cx="2" cy="3" r="1.25"/>
+        <circle cx="12" cy="3" r="1.25"/>
+        <circle cx="7" cy="12.5" r="1.25"/>
+        <path d="M3.1 3.9L5.4 5.7M10.9 3.9L8.6 5.7M7 8.75V11.2"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'comps',
+    label: 'Comps',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+        <path d="M1.5 12h11M3.5 12V8M7 12V4M10.5 12V9.5"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'risks',
+    label: 'Risks',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M7 1.5L13 12H1L7 1.5z"/>
+        <path d="M7 5.5v3.5"/>
+        <circle cx="7" cy="10.5" r="0.6" fill="currentColor" stroke="none"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'acquirers',
+    label: 'Acquirers',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <circle cx="7" cy="7" r="6"/>
+        <circle cx="7" cy="7" r="3"/>
+        <circle cx="7" cy="7" r="0.75" fill="currentColor" stroke="none"/>
+      </svg>
+    ),
+  },
 ]
+
+// ── App ────────────────────────────────────────────────────────────────────────
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('memo')
   const [query, setQuery] = useState(null)
-  const { run, steps, result, error, isRunning, abort, debugLog } = useSSE()
+  const { run, steps, result, error, isRunning, abort } = useSSE()
 
   function handleSubmit(params) {
     setQuery(params)
@@ -27,80 +80,98 @@ export default function App() {
     run(params)
   }
 
-  // Read Neo4j config from environment (injected at build time via Vite)
   const neoConfig = {
-    serverUrl: import.meta.env.VITE_NEO4J_URI || '',
-    serverUser: import.meta.env.VITE_NEO4J_USER || 'neo4j',
+    serverUrl:      import.meta.env.VITE_NEO4J_URI || '',
+    serverUser:     import.meta.env.VITE_NEO4J_USER || 'neo4j',
     serverPassword: import.meta.env.VITE_NEO4J_PASSWORD || '',
   }
 
-  // Badge counts for tabs
   const badgeCounts = {
-    comps:     result?.comps_table?.length || 0,
-    risks:     result?.red_flags?.length || 0,
+    comps:     result?.comps_table?.length     || 0,
+    risks:     result?.red_flags?.length        || 0,
     acquirers: result?.likely_acquirers?.length || 0,
   }
 
   return (
     <div className="min-h-screen bg-gray-950">
-      {/* Header */}
-      <header className="border-b border-gray-800 bg-gray-950/90 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-white tracking-tight">
-              DealScope <span className="text-indigo-400">AI</span>
-            </h1>
-            <p className="text-xs text-gray-500 mt-0.5">Autonomous VC & M&A Diligence Agent</p>
+
+      {/* ── Header ── */}
+      <header className="border-b border-gray-800/70 bg-gray-950/95 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-5 h-12 flex items-center gap-3">
+          {/* Logo mark */}
+          <div className="w-6 h-6 rounded-md bg-indigo-600 flex items-center justify-center shrink-0">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1.5 6h9M6 1.5L10.5 6 6 10.5"/>
+            </svg>
           </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm font-semibold text-white tracking-tight">DealScope</span>
+            <span className="text-sm font-semibold text-indigo-400 tracking-tight">AI</span>
+          </div>
+
+          <div className="h-3.5 w-px bg-gray-800 mx-0.5" />
+          <span className="text-xs text-gray-600">VC & M&A Diligence</span>
+
           {result && (
-            <div className="text-xs text-gray-500 text-right">
-              <div className="text-emerald-400 font-medium">Analysis complete</div>
-              {result.total_elapsed && <div>{result.total_elapsed}s total</div>}
+            <div className="ml-auto flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="text-xs text-gray-500 tabular-nums">
+                {result.total_elapsed ? `${result.total_elapsed}s` : 'Complete'}
+              </span>
             </div>
           )}
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
-        {/* Input form */}
+      {/* ── Main ── */}
+      <main className="max-w-4xl mx-auto px-5 py-7 space-y-4">
+
+        {/* Search */}
         <InputForm onSubmit={handleSubmit} isRunning={isRunning} onAbort={abort} />
 
-        {/* Progress stream — show as soon as analysis starts */}
+        {/* Pipeline progress */}
         {(isRunning || steps.length > 0 || error) && (
           <ProgressStream steps={steps} isRunning={isRunning} error={error} />
         )}
 
-        {/* Debug log — always visible while running or if something went wrong */}
-        {(isRunning || error || debugLog.length > 0) && (
-          <DebugPanel log={debugLog} isRunning={isRunning} />
-        )}
-
-        {/* Company info banner (once we have data) */}
+        {/* Company info banner */}
         {result?.company_info && (
           <CompanyBanner info={result.company_info} market={result.market_info} />
         )}
 
-        {/* Results tabs */}
+        {/* Results panel */}
         {(result || isRunning) && (
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-xl">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+
             {/* Tab bar */}
             <div className="flex border-b border-gray-800 overflow-x-auto">
               {TABS.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-5 py-3.5 text-sm font-medium whitespace-nowrap transition-colors relative
+                  className={`relative flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors
                     ${activeTab === tab.id
-                      ? 'text-white border-b-2 border-indigo-500 bg-gray-800/50'
-                      : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/30'
+                      ? 'text-white'
+                      : 'text-gray-500 hover:text-gray-300'
                     }`}
                 >
-                  <span>{tab.icon}</span>
-                  <span>{tab.label}</span>
+                  <span className={activeTab === tab.id ? 'text-indigo-400' : 'text-gray-600'}>
+                    {tab.icon}
+                  </span>
+                  {tab.label}
                   {badgeCounts[tab.id] > 0 && (
-                    <span className="ml-0.5 bg-indigo-600 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[1.25rem] text-center">
+                    <span className={`text-xs rounded px-1.5 py-0.5 tabular-nums font-medium
+                      ${activeTab === tab.id
+                        ? 'bg-indigo-600/70 text-indigo-100'
+                        : 'bg-gray-800 text-gray-500'
+                      }`}
+                    >
                       {badgeCounts[tab.id]}
                     </span>
+                  )}
+                  {activeTab === tab.id && (
+                    <span className="absolute bottom-0 left-0 right-0 h-px bg-indigo-500" />
                   )}
                 </button>
               ))}
@@ -141,84 +212,68 @@ export default function App() {
   )
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// ── Sub-components ─────────────────────────────────────────────────────────────
 
 function CompanyBanner({ info, market }) {
   return (
-    <div className="bg-gradient-to-r from-indigo-950/50 to-gray-900 border border-indigo-800/30 rounded-2xl p-5">
-      <div className="flex flex-wrap gap-4 items-start">
+    <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex-1 min-w-0">
-          <h2 className="text-xl font-bold text-white">{info.name}</h2>
+          <h2 className="text-lg font-bold text-white tracking-tight leading-tight">
+            {info.name}
+          </h2>
           {info.description && (
-            <p className="text-sm text-gray-300 mt-1 leading-relaxed max-w-2xl">{info.description}</p>
+            <p className="text-sm text-gray-400 mt-1.5 leading-relaxed max-w-2xl">
+              {info.description}
+            </p>
           )}
         </div>
-        <div className="flex flex-wrap gap-2 shrink-0">
-          {info.sector && <Chip label={info.sector} color="purple" />}
-          {info.hq_location && <Chip label={info.hq_location} color="gray" />}
-          {market?.tam && <Chip label={`TAM: ${market.tam}`} color="emerald" />}
+        <div className="flex flex-wrap gap-1.5 shrink-0 mt-0.5">
+          {info.sector && (
+            <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-violet-500/10 text-violet-300 border border-violet-500/20">
+              {info.sector}
+            </span>
+          )}
+          {info.hq_location && (
+            <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-gray-800 text-gray-400 border border-gray-700">
+              {info.hq_location}
+            </span>
+          )}
         </div>
       </div>
-    </div>
-  )
-}
 
-function Chip({ label, color }) {
-  const colors = {
-    indigo:  'bg-indigo-900/50 text-indigo-300 border-indigo-700/50',
-    purple:  'bg-purple-900/50 text-purple-300 border-purple-700/50',
-    emerald: 'bg-emerald-900/50 text-emerald-300 border-emerald-700/50',
-    gray:    'bg-gray-800 text-gray-300 border-gray-700',
-  }
-  return (
-    <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${colors[color] || colors.gray}`}>
-      {label}
-    </span>
-  )
-}
-
-function DebugPanel({ log, isRunning }) {
-  return (
-    <div className="bg-gray-950 border border-gray-700 rounded-xl overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-700 bg-gray-900">
-        <span className="text-xs font-mono font-semibold text-gray-400">
-          Stream Debug Log {isRunning && <span className="text-indigo-400 animate-pulse ml-1">● live</span>}
-        </span>
-        <span className="text-xs text-gray-600">{log.length} lines</span>
-      </div>
-      <div className="h-48 overflow-y-auto p-3 space-y-0.5 font-mono text-xs">
-        {log.length === 0 ? (
-          <p className="text-gray-600">Waiting for events...</p>
-        ) : (
-          log.map((line, i) => (
-            <div key={i} className={`leading-relaxed break-all ${
-              line.includes('ERROR') || line.includes('error') ? 'text-red-400' :
-              line.includes('Event:') ? 'text-emerald-400' :
-              line.includes('Chunk') ? 'text-blue-400' :
-              'text-gray-500'
-            }`}>{line}</div>
-          ))
-        )}
-      </div>
+      {market?.tam && (
+        <div className="mt-4 pt-4 border-t border-gray-800 flex items-start gap-3">
+          <span className="text-xs font-semibold text-emerald-500 uppercase tracking-wider mt-0.5 shrink-0">
+            TAM
+          </span>
+          <p className="text-sm text-gray-300 leading-relaxed">{market.tam}</p>
+        </div>
+      )}
     </div>
   )
 }
 
 function EmptyState() {
-  const examples = ['Ramp', 'Figma', 'Notion', 'Stripe', 'Airtable']
+  const examples = ['Stripe', 'Notion', 'Figma', 'Ramp', 'Airtable', 'Anthropic']
   return (
-    <div className="text-center py-16 px-4">
-      <div className="text-5xl mb-4">🔍</div>
-      <h2 className="text-lg font-semibold text-gray-300 mb-2">
-        Enter a company to begin autonomous diligence
+    <div className="text-center py-20 px-4">
+      <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-indigo-600/10 border border-indigo-600/20 mb-6">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#6366f1" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="8" cy="8" r="6.5"/>
+          <path d="m14.5 14.5-2.5-2.5"/>
+        </svg>
+      </div>
+      <h2 className="text-base font-semibold text-gray-200 mb-2 tracking-tight">
+        Autonomous investment diligence
       </h2>
-      <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">
-        DealScope researches across 60+ sources, extracts entities, builds a relationship graph,
-        and generates a full investment memo in ~60 seconds.
+      <p className="text-sm text-gray-500 max-w-xs mx-auto leading-relaxed mb-7">
+        Enter a company name to generate a full VC-style analysis — web research, entity extraction,
+        relationship graph, and investment memo in ~60 seconds.
       </p>
       <div className="flex flex-wrap justify-center gap-2">
         {examples.map(ex => (
-          <span key={ex} className="text-xs bg-gray-800 text-gray-400 px-3 py-1.5 rounded-full border border-gray-700">
+          <span key={ex} className="text-xs text-gray-500 px-2.5 py-1.5 rounded-lg bg-gray-900 border border-gray-800">
             {ex}
           </span>
         ))}
