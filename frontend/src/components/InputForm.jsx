@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react'
 
-const EXAMPLES = ['Stripe', 'Notion', 'Figma', 'Ramp', 'Airtable']
+const EXAMPLES = ['Stripe', 'Notion', 'Render', 'Ramp', 'Airtable', 'Tavily']
 
 export default function InputForm({ onSubmit, isRunning, onAbort }) {
   const [company, setCompany] = useState('')

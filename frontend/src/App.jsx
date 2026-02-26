@@ -255,7 +255,7 @@ function CompanyBanner({ info, market }) {
 }
 
 function EmptyState() {
-  const examples = ['Stripe', 'Notion', 'Figma', 'Ramp', 'Airtable', 'Anthropic']
+  const examples = ['Stripe', 'Notion', 'Render', 'Ramp', 'Airtable', 'Anthropic', 'Tavily']
   return (
     <div className="text-center py-20 px-4">
       <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-indigo-600/10 border border-indigo-600/20 mb-6">
