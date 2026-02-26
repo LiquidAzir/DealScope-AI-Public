@@ -94,6 +94,15 @@ async def analyze(req: AnalyzeRequest):
     return EventSourceResponse(event_generator())
 
 
+# ── Serve frontend (production) ──────────────────────────────────────────────
+# When the frontend has been built (e.g. on Render), serve it as static files.
+frontend_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+if frontend_dist.is_dir():
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="static")
+
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
