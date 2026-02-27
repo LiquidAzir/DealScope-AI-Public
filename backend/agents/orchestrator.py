@@ -48,11 +48,14 @@ class OrchestratorAgent:
         })
         t = time.time()
         wave1_results = await self.research.wave_1(company)
+        if not wave1_results:
+            logger.warning("Wave 1 returned 0 results — Tavily may be rate-limited or out of credits (HTTP 432)")
         yield _event("status", {
             "step": 1, "total": 6,
-            "message": f"Wave 1 complete — {len(wave1_results)} sources found",
+            "message": f"Wave 1 complete — {len(wave1_results)} sources found" if wave1_results
+                       else "Wave 1 returned no results — Tavily search unavailable (check API credits)",
             "elapsed": round(time.time() - t, 1),
-            "icon": "check",
+            "icon": "check" if wave1_results else "warning",
         })
 
         # ── Phase 2: Core extraction ──────────────────────────────────────────

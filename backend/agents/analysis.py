@@ -164,7 +164,6 @@ def _call_structured(instructions: str, content: str, schema: dict, name: str) -
             model=OPENAI_MODEL,
             instructions=instructions,
             input=content,
-            reasoning={"effort": "high"},
             text={"format": {"type": "json_schema", "name": name, "schema": schema, "strict": True}},
         )
         return json.loads(response.output_text)
@@ -188,7 +187,6 @@ def _call_freeform(instructions: str, content: str) -> str:
             model=OPENAI_MODEL,
             instructions=instructions,
             input=content,
-            reasoning={"effort": "high"},
         )
         return response.output_text
     except Exception as e:

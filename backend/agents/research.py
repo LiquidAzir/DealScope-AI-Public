@@ -22,7 +22,7 @@ class ResearchAgent:
         try:
             response = self.client.search(
                 query=query,
-                search_depth="advanced",
+                search_depth="basic",
                 include_answer=True,
                 include_raw_content=False,
                 max_results=5,

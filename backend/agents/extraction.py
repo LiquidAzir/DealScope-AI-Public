@@ -200,16 +200,19 @@ SIGNAL_SCHEMA = {
 def _call_structured(instructions: str, content: str, schema: dict, schema_name: str) -> dict:
     """
     Call OpenAI and return parsed JSON.
-    Tries the Responses API first (for reasoning models); falls back to
-    Chat Completions with response_format if the model doesn't support it.
+    Tries the Responses API first; falls back to Chat Completions.
     """
-    # Try Responses API (reasoning models like o1, gpt-5.2)
+    # Responses API rejects empty input — substitute a placeholder so extraction
+    # returns an empty-but-valid structure rather than raising an error.
+    safe_content = content.strip() if content else ""
+    if not safe_content:
+        safe_content = "No research data was available for this query."
+
     try:
         response = client.responses.create(
             model=OPENAI_MODEL,
             instructions=instructions,
-            input=content,
-            reasoning={"effort": "medium"},
+            input=safe_content,
             text={
                 "format": {
                     "type": "json_schema",
@@ -247,12 +250,12 @@ def _call_freeform(instructions: str, content: str, effort: str = "high") -> str
     Call OpenAI for free-form text output (investment memo).
     Tries Responses API first, then falls back to Chat Completions.
     """
+    safe_content = content.strip() if content else "No research data was available."
     try:
         response = client.responses.create(
             model=OPENAI_MODEL,
             instructions=instructions,
-            input=content,
-            reasoning={"effort": effort},
+            input=safe_content,
         )
         return response.output_text
     except Exception as e:
