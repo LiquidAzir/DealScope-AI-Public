@@ -22,3 +22,5 @@ NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "")
 
 # Whether Neo4j is available — agent degrades gracefully if not
 NEO4J_ENABLED = bool(NEO4J_URI and NEO4J_PASSWORD)
+
+DATABASE_URL = os.getenv("DATABASE_URL", "")

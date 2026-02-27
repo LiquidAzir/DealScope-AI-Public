@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import InputForm from './components/InputForm.jsx'
 import ProgressStream from './components/ProgressStream.jsx'
 import MemoView from './components/MemoView.jsx'
@@ -6,6 +6,7 @@ import GraphView from './components/GraphView.jsx'
 import CompsTable from './components/CompsTable.jsx'
 import RedFlags from './components/RedFlags.jsx'
 import AcquirerRank from './components/AcquirerRank.jsx'
+import HistoryPanel from './components/HistoryPanel.jsx'
 import { useSSE } from './hooks/useSSE.js'
 
 // ── Tab definitions with inline SVG icons ──────────────────────────────────────
@@ -72,13 +73,74 @@ const TABS = [
 export default function App() {
   const [activeTab, setActiveTab] = useState('memo')
   const [query, setQuery] = useState(null)
+  const [history, setHistory] = useState([])
+  const savedRef = useRef(false)
   const { run, steps, result, error, isRunning, abort } = useSSE()
 
+  // Load history on mount
+  useEffect(() => {
+    fetch('/analyses')
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setHistory(Array.isArray(data) ? data : []))
+      .catch(() => {})
+  }, [])
+
+  // Save result when pipeline completes
+  useEffect(() => {
+    if (!result || savedRef.current) return
+    savedRef.current = true
+    const company_name = query?.company || result?.company_info?.name || ''
+    const sector = result?.company_info?.sector || ''
+    fetch('/analyses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ company_name, sector, result }),
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(saved => {
+        if (saved?.id) {
+          setHistory(prev => [
+            { id: saved.id, company_name, sector, created_at: saved.created_at },
+            ...prev,
+          ])
+        }
+      })
+      .catch(() => {})
+  }, [result])
+
   function handleSubmit(params) {
+    savedRef.current = false
     setQuery(params)
     setActiveTab('memo')
     run(params)
   }
+
+  async function handleLoadHistory(entry) {
+    try {
+      const r = await fetch(`/analyses/${entry.id}`)
+      if (!r.ok) return
+      const data = await r.json()
+      setQuery({ company: data.company_name })
+      setActiveTab('memo')
+      // Inject the restored result directly into the SSE hook's result state
+      // by calling run with a pre-populated result — we instead set state externally
+      // via the setResult exposed from useSSE, or bypass by setting a local result override.
+      // Since useSSE doesn't expose setResult, we use a workaround: store in local state.
+      setRestoredResult(data.result)
+    } catch (_) {}
+  }
+
+  function handleDeleteHistory(id) {
+    fetch(`/analyses/${id}`, { method: 'DELETE' })
+      .then(r => {
+        if (r.ok) setHistory(prev => prev.filter(e => e.id !== id))
+      })
+      .catch(() => {})
+  }
+
+  // Restored result from history (bypasses useSSE)
+  const [restoredResult, setRestoredResult] = useState(null)
+  const displayResult = restoredResult || result
 
   const neoConfig = {
     serverUrl:      import.meta.env.VITE_NEO4J_URI || '',
@@ -87,10 +149,12 @@ export default function App() {
   }
 
   const badgeCounts = {
-    comps:     result?.comps_table?.length     || 0,
-    risks:     result?.red_flags?.length        || 0,
-    acquirers: result?.likely_acquirers?.length || 0,
+    comps:     displayResult?.comps_table?.length     || 0,
+    risks:     displayResult?.red_flags?.length        || 0,
+    acquirers: displayResult?.likely_acquirers?.length || 0,
   }
+
+  const isIdle = !displayResult && !isRunning && steps.length === 0 && !error
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -113,11 +177,11 @@ export default function App() {
           <div className="h-3.5 w-px bg-gray-800 mx-0.5" />
           <span className="text-xs text-gray-600">VC & M&A Diligence</span>
 
-          {result && (
+          {displayResult && (
             <div className="ml-auto flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <span className="text-xs text-gray-500 tabular-nums">
-                {result.total_elapsed ? `${result.total_elapsed}s` : 'Complete'}
+                {displayResult.total_elapsed ? `${displayResult.total_elapsed}s` : 'Complete'}
               </span>
             </div>
           )}
@@ -136,12 +200,12 @@ export default function App() {
         )}
 
         {/* Company info banner */}
-        {result?.company_info && (
-          <CompanyBanner info={result.company_info} market={result.market_info} />
+        {displayResult?.company_info && (
+          <CompanyBanner info={displayResult.company_info} market={displayResult.market_info} />
         )}
 
         {/* Results panel */}
-        {(result || isRunning) && (
+        {(displayResult || isRunning) && (
           <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
 
             {/* Tab bar */}
@@ -179,33 +243,42 @@ export default function App() {
 
             {/* Tab content */}
             <div className="p-5">
-              {activeTab === 'memo' && <MemoView memo={result?.memo} />}
+              {activeTab === 'memo' && <MemoView memo={displayResult?.memo} />}
               {activeTab === 'graph' && (
                 <GraphView
                   neoConfig={neoConfig}
-                  graphStats={result?.graph_stats}
-                  investorOverlaps={result?.investor_overlaps}
+                  graphStats={displayResult?.graph_stats}
+                  investorOverlaps={displayResult?.investor_overlaps}
                   companyName={query?.company}
-                  comps={result?.comps_table}
-                  acquirers={result?.likely_acquirers}
-                  companyInfo={result?.company_info}
+                  comps={displayResult?.comps_table}
+                  acquirers={displayResult?.likely_acquirers}
+                  companyInfo={displayResult?.company_info}
                 />
               )}
-              {activeTab === 'comps' && <CompsTable comps={result?.comps_table} />}
-              {activeTab === 'risks' && <RedFlags flags={result?.red_flags} />}
+              {activeTab === 'comps' && <CompsTable comps={displayResult?.comps_table} />}
+              {activeTab === 'risks' && <RedFlags flags={displayResult?.red_flags} />}
               {activeTab === 'acquirers' && (
                 <AcquirerRank
-                  acquirers={result?.likely_acquirers}
-                  exitScores={result?.exit_scores}
+                  acquirers={displayResult?.likely_acquirers}
+                  exitScores={displayResult?.exit_scores}
                 />
               )}
             </div>
           </div>
         )}
 
-        {/* Empty state */}
-        {!result && !isRunning && steps.length === 0 && !error && (
-          <EmptyState />
+        {/* History + empty state */}
+        {isIdle && (
+          <>
+            {history.length > 0 && (
+              <HistoryPanel
+                history={history}
+                onLoad={handleLoadHistory}
+                onDelete={handleDeleteHistory}
+              />
+            )}
+            <EmptyState />
+          </>
         )}
       </main>
     </div>

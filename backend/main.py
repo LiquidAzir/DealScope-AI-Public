@@ -16,6 +16,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
+import database
+
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
@@ -25,11 +27,25 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# ── Request model ─────────────────────────────────────────────────────────────
+# ── Request models ─────────────────────────────────────────────────────────────
 class AnalyzeRequest(BaseModel):
     company: str
     stage: str = "Series A"        # Seed | Series A | Growth
     exit_type: str = ""            # IPO | Strategic Acquisition | ""
+
+
+class SaveAnalysisRequest(BaseModel):
+    company_name: str
+    sector: str = ""
+    result: dict
+
+
+# ── Lifespan ───────────────────────────────────────────────────────────────────
+@asynccontextmanager
+async def lifespan(app):
+    await database.init_pool()
+    yield
+    await database.close_pool()
 
 
 # ── App ───────────────────────────────────────────────────────────────────────
@@ -37,6 +53,7 @@ app = FastAPI(
     title="DealScope AI",
     description="Autonomous VC & M&A Diligence Agent",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -94,8 +111,41 @@ async def analyze(req: AnalyzeRequest):
     return EventSourceResponse(event_generator())
 
 
+# ── Analysis history endpoints ─────────────────────────────────────────────────
+
+@app.post("/analyses")
+async def create_analysis(req: SaveAnalysisRequest):
+    saved = await database.save_analysis(req.company_name, req.sector, req.result)
+    if saved is None:
+        # DB not configured — return a no-op 200 so the frontend doesn't error
+        return {"id": None, "created_at": None}
+    return saved
+
+
+@app.get("/analyses")
+async def list_analyses():
+    return await database.get_analyses()
+
+
+@app.get("/analyses/{id}")
+async def fetch_analysis(id: int):
+    entry = await database.get_analysis(id)
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    return entry
+
+
+@app.delete("/analyses/{id}")
+async def remove_analysis(id: int):
+    ok = await database.delete_analysis(id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    return {"deleted": True}
+
+
 # ── Serve frontend (production) ──────────────────────────────────────────────
 # When the frontend has been built (e.g. on Render), serve it as static files.
+# This mount must stay LAST — it catches all unmatched paths.
 frontend_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 if frontend_dist.is_dir():
     from fastapi.staticfiles import StaticFiles

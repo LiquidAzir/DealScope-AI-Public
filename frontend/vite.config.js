@@ -13,6 +13,7 @@ export default defineConfig({
         proxyTimeout: 0,      // no backend response timeout
       },
       '/health': 'http://localhost:8000',
+      '/analyses': 'http://localhost:8000',
     },
   },
 })
