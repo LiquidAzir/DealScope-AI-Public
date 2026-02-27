@@ -39,3 +39,6 @@ logs/
 # Misc
 *.pptx
 Background files/
+
+# Claude Code local settings
+.claude/
