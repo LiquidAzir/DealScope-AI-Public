@@ -274,7 +274,8 @@ def _call_freeform(instructions: str, content: str, effort: str = "high") -> str
 # ── ExtractionAgent ───────────────────────────────────────────────────────────
 
 class ExtractionAgent:
-    """Converts raw research text into structured entity objects."""
+    """Converts raw research text into structured entity objects.
+    All three extraction methods use strict JSON schemas to prevent hallucination."""
 
     def extract_core(self, raw_text: str) -> CoreEntities:
         instructions = (

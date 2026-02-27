@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 
+// Preferences are persisted to Postgres and injected into the memo prompt at runtime
 const MAX_CHARS = 400
 
 export default function FeedbackPanel({ preferences, onSave }) {

@@ -60,6 +60,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# SSE requires credentials=True; origins wildcard is fine for local dev
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],           # Tighten for production

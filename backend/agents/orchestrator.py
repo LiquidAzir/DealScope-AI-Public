@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def _event(event_type: str, data: dict) -> dict:
+    """Wraps a payload into the SSE event envelope expected by the frontend."""
     return {"event": event_type, "data": data}
 
 

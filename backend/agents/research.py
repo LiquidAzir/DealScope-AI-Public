@@ -111,7 +111,8 @@ class ResearchAgent:
         return await self._parallel_search(queries)
 
     def format_for_extraction(self, results: List[Dict[str, Any]]) -> str:
-        """Convert raw Tavily results into a clean text blob for the LLM."""
+        """Convert raw Tavily results into a clean text blob for the LLM.
+        Capped at 40 sources to stay within model context limits."""
         parts = []
         for i, r in enumerate(results[:40], 1):  # Cap at 40 sources to stay within token limits
             title = r.get("title", "")

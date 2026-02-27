@@ -172,6 +172,7 @@ export default function App() {
     serverPassword: import.meta.env.VITE_NEO4J_PASSWORD || '',
   }
 
+  // Badge counts shown on tab pills — only populated once the pipeline completes
   const badgeCounts = {
     comps:     displayResult?.comps_table?.length     || 0,
     risks:     displayResult?.red_flags?.length        || 0,
