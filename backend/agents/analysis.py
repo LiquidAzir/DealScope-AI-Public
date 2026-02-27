@@ -265,10 +265,19 @@ class MemoAgent:
         signals: SignalEntities,
         analysis: AnalysisOutput,
         graph_insights: GraphInsights,
+        preferences: str = "",
     ) -> str:
         content = self._build_memo_prompt(company, stage, exit_type, core, market, signals, analysis, graph_insights)
+        instructions = MEMO_INSTRUCTIONS
+        if preferences and preferences.strip():
+            instructions += (
+                "\n\n---\n"
+                "ANALYST PREFERENCES — apply these adjustments to this memo:\n"
+                f"{preferences.strip()}\n"
+                "Honour these preferences while maintaining the required structure above."
+            )
         try:
-            return _call_freeform(MEMO_INSTRUCTIONS, content)
+            return _call_freeform(instructions, content)
         except Exception as e:
             logger.error(f"Memo generation failed: {e}")
             return f"# Investment Memo — {company}\n\n*Memo generation encountered an error: {e}*"

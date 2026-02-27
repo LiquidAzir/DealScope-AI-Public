@@ -40,6 +40,10 @@ class SaveAnalysisRequest(BaseModel):
     result: dict
 
 
+class PreferencesRequest(BaseModel):
+    memo_preferences: str = ""
+
+
 # ── Lifespan ───────────────────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app):
@@ -141,6 +145,19 @@ async def remove_analysis(id: int):
     if not ok:
         raise HTTPException(status_code=404, detail="Analysis not found")
     return {"deleted": True}
+
+
+# ── Memo preferences (continuous learning) ────────────────────────────────────
+
+@app.get("/preferences")
+async def get_preferences():
+    return {"memo_preferences": await database.get_preferences()}
+
+
+@app.post("/preferences")
+async def save_preferences(req: PreferencesRequest):
+    await database.save_preferences(req.memo_preferences)
+    return {"ok": True}
 
 
 # ── Serve frontend (production) ──────────────────────────────────────────────

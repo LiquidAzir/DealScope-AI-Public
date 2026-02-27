@@ -156,9 +156,17 @@ class OrchestratorAgent:
         })
 
         # ── Phase 6: Investment memo ───────────────────────────────────────────
+        # Load any saved analyst preferences to personalise the memo
+        try:
+            import database
+            preferences = await database.get_preferences()
+        except Exception:
+            preferences = ""
+
         yield _event("status", {
             "step": 6, "total": 6,
-            "message": "Writing investment memo...",
+            "message": "Writing investment memo (applying your preferences)..." if preferences
+                       else "Writing investment memo...",
             "icon": "document",
         })
         t = time.time()
@@ -167,6 +175,7 @@ class OrchestratorAgent:
             self.memo_agent.generate,
             company, stage, exit_type,
             core, market, signals, analysis, graph_insights,
+            preferences,
         )
         yield _event("status", {
             "step": 6, "total": 6,

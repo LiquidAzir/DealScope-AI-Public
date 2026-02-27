@@ -7,6 +7,7 @@ import CompsTable from './components/CompsTable.jsx'
 import RedFlags from './components/RedFlags.jsx'
 import AcquirerRank from './components/AcquirerRank.jsx'
 import HistoryPanel from './components/HistoryPanel.jsx'
+import FeedbackPanel from './components/FeedbackPanel.jsx'
 import { useSSE } from './hooks/useSSE.js'
 
 // ── Tab definitions with inline SVG icons ──────────────────────────────────────
@@ -82,12 +83,16 @@ export default function App() {
   const displayResult = restoredResult || result
 
   const [showHistory, setShowHistory] = useState(false)
+  const [preferences, setPreferences] = useState('')
 
-  // Load history on mount
   useEffect(() => {
     fetch('/analyses')
       .then(r => r.ok ? r.json() : [])
       .then(data => setHistory(Array.isArray(data) ? data : []))
+      .catch(() => {})
+    fetch('/preferences')
+      .then(r => r.ok ? r.json() : {})
+      .then(data => setPreferences(data.memo_preferences || ''))
       .catch(() => {})
   }, [])
 
@@ -148,6 +153,17 @@ export default function App() {
         if (r.ok) setHistory(prev => prev.filter(e => e.id !== id))
       })
       .catch(() => {})
+  }
+
+  async function handleSavePreferences(text) {
+    try {
+      await fetch('/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memo_preferences: text }),
+      })
+      setPreferences(text)
+    } catch (_) {}
   }
 
   const neoConfig = {
@@ -301,6 +317,14 @@ export default function App() {
               )}
             </div>
           </div>
+        )}
+
+        {/* Memo preferences — shown once a memo is available and pipeline is done */}
+        {!isRunning && displayResult?.memo && (
+          <FeedbackPanel
+            preferences={preferences}
+            onSave={handleSavePreferences}
+          />
         )}
 
         {/* History — shown in idle state or when toggled via Recent button */}

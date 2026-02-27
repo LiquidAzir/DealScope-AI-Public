@@ -16,6 +16,17 @@ CREATE TABLE IF NOT EXISTS analyses (
 );
 """
 
+_CREATE_PREFERENCES_TABLE = """
+CREATE TABLE IF NOT EXISTS preferences (
+    id                INTEGER PRIMARY KEY DEFAULT 1,
+    memo_preferences  TEXT NOT NULL DEFAULT '',
+    updated_at        TIMESTAMPTZ DEFAULT NOW()
+);
+INSERT INTO preferences (id, memo_preferences)
+VALUES (1, '')
+ON CONFLICT (id) DO NOTHING;
+"""
+
 
 async def init_pool():
     global pool
@@ -29,6 +40,7 @@ async def init_pool():
         pool = await asyncpg.create_pool(url, min_size=1, max_size=5)
         async with pool.acquire() as conn:
             await conn.execute(_CREATE_TABLE)
+            await conn.execute(_CREATE_PREFERENCES_TABLE)
         logger.info("Database pool initialised")
     except Exception as e:
         logger.warning(f"Database init failed — history disabled: {e}")
@@ -127,4 +139,40 @@ async def delete_analysis(id: int) -> bool:
             return result == "DELETE 1"
     except Exception as e:
         logger.warning(f"delete_analysis failed: {e}")
+        return False
+
+
+async def get_preferences() -> str:
+    if not pool:
+        return ""
+    try:
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT memo_preferences FROM preferences WHERE id = 1"
+            )
+            return row["memo_preferences"] if row else ""
+    except Exception as e:
+        logger.warning(f"get_preferences failed: {e}")
+        return ""
+
+
+async def save_preferences(text: str) -> bool:
+    if not pool:
+        return False
+    try:
+        # Cap at 500 chars server-side as a safety net
+        safe_text = text.strip()[:500]
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO preferences (id, memo_preferences, updated_at)
+                VALUES (1, $1, NOW())
+                ON CONFLICT (id) DO UPDATE
+                  SET memo_preferences = $1, updated_at = NOW()
+                """,
+                safe_text,
+            )
+        return True
+    except Exception as e:
+        logger.warning(f"save_preferences failed: {e}")
         return False
