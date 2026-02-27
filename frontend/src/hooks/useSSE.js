@@ -131,5 +131,14 @@ export function useSSE() {
     setIsRunning(false)
   }, [])
 
-  return { run, steps, result, error, isRunning, abort, debugLog }
+  const reset = useCallback(() => {
+    if (abortRef.current) abortRef.current.abort()
+    setSteps([])
+    setResult(null)
+    setError(null)
+    setIsRunning(false)
+    setDebugLog([])
+  }, [])
+
+  return { run, steps, result, error, isRunning, abort, reset, debugLog }
 }

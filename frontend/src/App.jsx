@@ -75,7 +75,13 @@ export default function App() {
   const [query, setQuery] = useState(null)
   const [history, setHistory] = useState([])
   const savedRef = useRef(false)
-  const { run, steps, result, error, isRunning, abort } = useSSE()
+  const { run, steps, result, error, isRunning, abort, reset } = useSSE()
+
+  // Restored result from history (bypasses useSSE)
+  const [restoredResult, setRestoredResult] = useState(null)
+  const displayResult = restoredResult || result
+
+  const [showHistory, setShowHistory] = useState(false)
 
   // Load history on mount
   useEffect(() => {
@@ -108,8 +114,17 @@ export default function App() {
       .catch(() => {})
   }, [result])
 
+  function handleGoHome() {
+    reset()
+    setRestoredResult(null)
+    setQuery(null)
+    setShowHistory(false)
+  }
+
   function handleSubmit(params) {
     savedRef.current = false
+    setRestoredResult(null)
+    setShowHistory(false)
     setQuery(params)
     setActiveTab('memo')
     run(params)
@@ -122,11 +137,8 @@ export default function App() {
       const data = await r.json()
       setQuery({ company: data.company_name })
       setActiveTab('memo')
-      // Inject the restored result directly into the SSE hook's result state
-      // by calling run with a pre-populated result — we instead set state externally
-      // via the setResult exposed from useSSE, or bypass by setting a local result override.
-      // Since useSSE doesn't expose setResult, we use a workaround: store in local state.
       setRestoredResult(data.result)
+      setShowHistory(false)
     } catch (_) {}
   }
 
@@ -137,10 +149,6 @@ export default function App() {
       })
       .catch(() => {})
   }
-
-  // Restored result from history (bypasses useSSE)
-  const [restoredResult, setRestoredResult] = useState(null)
-  const displayResult = restoredResult || result
 
   const neoConfig = {
     serverUrl:      import.meta.env.VITE_NEO4J_URI || '',
@@ -162,20 +170,43 @@ export default function App() {
       {/* ── Header ── */}
       <header className="border-b border-gray-800/70 bg-gray-950/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-5 h-12 flex items-center gap-3">
-          {/* Logo mark */}
-          <div className="w-6 h-6 rounded-md bg-indigo-600 flex items-center justify-center shrink-0">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M1.5 6h9M6 1.5L10.5 6 6 10.5"/>
-            </svg>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-semibold text-white tracking-tight">DealScope</span>
-            <span className="text-sm font-semibold text-indigo-400 tracking-tight">AI</span>
-          </div>
+          {/* Logo — click to go home */}
+          <button
+            onClick={handleGoHome}
+            className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+          >
+            <div className="w-6 h-6 rounded-md bg-indigo-600 flex items-center justify-center shrink-0">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1.5 6h9M6 1.5L10.5 6 6 10.5"/>
+              </svg>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-semibold text-white tracking-tight">DealScope</span>
+              <span className="text-sm font-semibold text-indigo-400 tracking-tight">AI</span>
+            </div>
+          </button>
 
           <div className="h-3.5 w-px bg-gray-800 mx-0.5" />
           <span className="text-xs text-gray-600">VC & M&A Diligence</span>
+
+          {/* Recent analyses button */}
+          {history.length > 0 && !isRunning && (
+            <button
+              onClick={() => setShowHistory(v => !v)}
+              className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md border transition-colors
+                ${showHistory
+                  ? 'bg-indigo-600/20 text-indigo-300 border-indigo-600/30'
+                  : 'bg-gray-800/60 text-gray-400 border-gray-700/50 hover:text-gray-300'
+                }`}
+            >
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="6" cy="6" r="5"/>
+                <path d="M6 3.5v2.75l1.75 1.75"/>
+              </svg>
+              Recent
+              <span className="tabular-nums text-gray-500">{history.length}</span>
+            </button>
+          )}
 
           {displayResult && (
             <div className="ml-auto flex items-center gap-2">
@@ -267,19 +298,17 @@ export default function App() {
           </div>
         )}
 
-        {/* History + empty state */}
-        {isIdle && (
-          <>
-            {history.length > 0 && (
-              <HistoryPanel
-                history={history}
-                onLoad={handleLoadHistory}
-                onDelete={handleDeleteHistory}
-              />
-            )}
-            <EmptyState />
-          </>
+        {/* History — shown in idle state or when toggled via Recent button */}
+        {!isRunning && history.length > 0 && (isIdle || showHistory) && (
+          <HistoryPanel
+            history={history}
+            onLoad={handleLoadHistory}
+            onDelete={handleDeleteHistory}
+          />
         )}
+
+        {/* Empty state */}
+        {isIdle && <EmptyState />}
       </main>
     </div>
   )
