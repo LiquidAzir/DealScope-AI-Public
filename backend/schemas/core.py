@@ -98,7 +98,8 @@ class ExitSignals(BaseModel):
     sector_exit_activity: str = ""
 
 
-# ── Aggregate entity bundles (one per extraction wave) ────────────────────────
+# ── Aggregate entity bundles (one per extraction wave) ───────────────────────
+# CoreEntities ← wave 1 | MarketEntities ← wave 2 | SignalEntities ← wave 3
 
 class CoreEntities(BaseModel):
     company: CompanyInfo = Field(default_factory=CompanyInfo)

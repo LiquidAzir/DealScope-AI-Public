@@ -1,4 +1,5 @@
 @echo off
+:: DealScope AI — local dev launcher (starts backend + frontend in separate windows)
 echo Starting DealScope AI...
 echo.
 

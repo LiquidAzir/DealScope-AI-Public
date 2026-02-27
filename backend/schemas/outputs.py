@@ -1,3 +1,4 @@
+# Analysis and graph output schemas — produced by AnalysisAgent and GraphAgent
 from pydantic import BaseModel, Field
 from typing import List, Optional
 

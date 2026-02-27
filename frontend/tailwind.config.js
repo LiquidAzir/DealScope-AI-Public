@@ -1,4 +1,5 @@
 /** @type {import('tailwindcss').Config} */
+// brand palette mirrors the indigo-600 accent used throughout the UI
 export default {
   content: [
     "./index.html",
