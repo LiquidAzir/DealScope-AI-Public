@@ -3,14 +3,9 @@ import React, { useState, useEffect } from 'react'
 const MAX_CHARS = 400
 
 export default function FeedbackPanel({ preferences, onSave }) {
-  const [text, setText] = useState(preferences || '')
+  const [text, setText] = useState('')
   const [saved, setSaved] = useState(false)
   const [dirty, setDirty] = useState(false)
-
-  useEffect(() => {
-    setText(preferences || '')
-    setDirty(false)
-  }, [preferences])
 
   function handleChange(e) {
     setText(e.target.value.slice(0, MAX_CHARS))
@@ -20,12 +15,13 @@ export default function FeedbackPanel({ preferences, onSave }) {
 
   async function handleSave() {
     await onSave(text)
+    setText('')
     setSaved(true)
     setDirty(false)
   }
 
   const remaining = MAX_CHARS - text.length
-  const hasContent = text.trim().length > 0
+  const hasContent = (preferences || '').trim().length > 0
 
   return (
     <div className="relative rounded-xl overflow-hidden border border-indigo-500/25 bg-gray-900">
