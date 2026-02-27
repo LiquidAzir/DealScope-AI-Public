@@ -1,10 +1,19 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 
 const EXAMPLES = ['Stripe', 'Notion', 'Render', 'Ramp', 'Airtable', 'Tavily']
 
 export default function InputForm({ onSubmit, isRunning, onAbort }) {
   const [company, setCompany] = useState('')
   const inputRef = useRef(null)
+
+  // Escape aborts a running pipeline from anywhere on the page
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === 'Escape' && isRunning) onAbort()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [isRunning, onAbort])
 
   function handleSubmit(e) {
     e.preventDefault()

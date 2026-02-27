@@ -84,6 +84,8 @@ export default function App() {
 
   const [showHistory, setShowHistory] = useState(false)
   const [preferences, setPreferences] = useState('')
+  const [toast, setToast] = useState(null)
+  const toastTimerRef = useRef(null)
 
   useEffect(() => {
     fetch('/analyses')
@@ -114,6 +116,10 @@ export default function App() {
             { id: saved.id, company_name, sector, created_at: saved.created_at },
             ...prev,
           ])
+          // Show save confirmation toast
+          if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+          setToast(`"${company_name}" saved to history`)
+          toastTimerRef.current = setTimeout(() => setToast(null), 3000)
         }
       })
       .catch(() => {})
@@ -362,6 +368,17 @@ export default function App() {
         {/* Empty state */}
         {isIdle && <EmptyState />}
       </main>
+      {/* ── Toast ── */}
+      {toast && (
+        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-xl text-xs text-gray-300 shadow-2xl pointer-events-none">
+          <div className="w-4 h-4 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+            <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
+              <path d="M1.5 5L4 7.5 8.5 2.5" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          {toast}
+        </div>
+      )}
     </div>
   )
 }
