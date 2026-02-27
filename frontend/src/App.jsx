@@ -274,7 +274,12 @@ export default function App() {
 
             {/* Tab content */}
             <div className="p-5">
-              {activeTab === 'memo' && <MemoView memo={displayResult?.memo} />}
+              {activeTab === 'memo' && (
+                <MemoView
+                  memo={displayResult?.memo}
+                  companyName={displayResult?.company_info?.name || query?.company || ''}
+                />
+              )}
               {activeTab === 'graph' && (
                 <GraphView
                   neoConfig={neoConfig}

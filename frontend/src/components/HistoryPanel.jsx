@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { exportMemoAsPDF } from '../utils/exportPDF.js'
 
 function relativeTime(isoString) {
   const diff = Date.now() - new Date(isoString).getTime()
@@ -9,6 +10,45 @@ function relativeTime(isoString) {
   if (hours < 24) return `${hours}h ago`
   const days = Math.floor(hours / 24)
   return `${days}d ago`
+}
+
+function DownloadButton({ entry }) {
+  const [loading, setLoading] = useState(false)
+
+  async function handleDownload(e) {
+    e.stopPropagation()
+    setLoading(true)
+    try {
+      const r = await fetch(`/analyses/${entry.id}`)
+      if (!r.ok) return
+      const data = await r.json()
+      exportMemoAsPDF(data.result?.memo, entry.company_name)
+    } catch (_) {
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <button
+      onClick={handleDownload}
+      disabled={loading}
+      className="text-gray-600 hover:text-gray-400 transition-colors shrink-0 p-0.5 disabled:opacity-40"
+      aria-label="Download PDF"
+      title="Download memo as PDF"
+    >
+      {loading ? (
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="animate-spin">
+          <circle cx="7" cy="7" r="5.5" strokeDasharray="22" strokeDashoffset="8"/>
+        </svg>
+      ) : (
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M7 1v8M4 6l3 3 3-3"/>
+          <path d="M2 10v1.5A1.5 1.5 0 003.5 13h7a1.5 1.5 0 001.5-1.5V10"/>
+        </svg>
+      )}
+    </button>
+  )
 }
 
 export default function HistoryPanel({ history, onLoad, onDelete }) {
@@ -53,6 +93,8 @@ export default function HistoryPanel({ history, onLoad, onDelete }) {
             >
               Load
             </button>
+
+            <DownloadButton entry={entry} />
 
             <button
               onClick={() => onDelete(entry.id)}
