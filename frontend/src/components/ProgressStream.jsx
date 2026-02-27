@@ -156,7 +156,7 @@ export default function ProgressStream({ steps, isRunning, error }) {
                     {phase.name}
                   </span>
                   {isDone && info?.elapsed && (
-                    <span className="text-xs text-gray-700 tabular-nums shrink-0">{info.elapsed}s</span>
+                    <span className="text-xs text-gray-500 tabular-nums shrink-0">{info.elapsed}s</span>
                   )}
                 </div>
                 <p className={`text-xs mt-0.5 leading-relaxed ${

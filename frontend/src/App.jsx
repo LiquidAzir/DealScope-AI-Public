@@ -265,7 +265,8 @@ export default function App() {
           <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
 
             {/* Tab bar */}
-            <div className="flex border-b border-gray-800 overflow-x-auto">
+            <div className="flex items-center border-b border-gray-800">
+              <div className="flex overflow-x-auto flex-1">
               {TABS.map(tab => (
                 <button
                   key={tab.id}
@@ -295,6 +296,21 @@ export default function App() {
                   )}
                 </button>
               ))}
+              </div>
+
+              {/* New Analysis button — pinned right of tab bar */}
+              {!isRunning && (
+                <button
+                  onClick={handleGoHome}
+                  className="shrink-0 flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 px-4 py-3 border-l border-gray-800 transition-colors whitespace-nowrap"
+                >
+                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 6A5 5 0 1 0 6 1"/>
+                    <path d="M1 1v5h5"/>
+                  </svg>
+                  New Analysis
+                </button>
+              )}
             </div>
 
             {/* Tab content */}
@@ -316,12 +332,18 @@ export default function App() {
                   companyInfo={displayResult?.company_info}
                 />
               )}
-              {activeTab === 'comps' && <CompsTable comps={displayResult?.comps_table} />}
+              {activeTab === 'comps' && (
+                <CompsTable
+                  comps={displayResult?.comps_table}
+                  companyInfo={displayResult?.company_info}
+                />
+              )}
               {activeTab === 'risks' && <RedFlags flags={displayResult?.red_flags} />}
               {activeTab === 'acquirers' && (
                 <AcquirerRank
                   acquirers={displayResult?.likely_acquirers}
                   exitScores={displayResult?.exit_scores}
+                  companyInfo={displayResult?.company_info}
                 />
               )}
             </div>

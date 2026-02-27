@@ -94,7 +94,22 @@ function AcquirerCard({ acquirer, rank }) {
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
-export default function AcquirerRank({ acquirers, exitScores }) {
+function CompanyBadges({ companyInfo }) {
+  if (!companyInfo) return null
+  const badges = [companyInfo.sector, companyInfo.sub_sector].filter(Boolean)
+  if (badges.length === 0) return null
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {badges.map(b => (
+        <span key={b} className="text-xs font-medium px-2.5 py-1 rounded-md bg-violet-500/10 text-violet-300 border border-violet-500/20">
+          {b}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+export default function AcquirerRank({ acquirers, exitScores, companyInfo }) {
   if (!acquirers || acquirers.length === 0) {
     return (
       <div className="flex items-center justify-center h-36 text-gray-600 text-sm">
@@ -107,6 +122,9 @@ export default function AcquirerRank({ acquirers, exitScores }) {
 
   return (
     <div className="space-y-5">
+
+      {/* Company context badges */}
+      <CompanyBadges companyInfo={companyInfo} />
 
       {/* Exit probability */}
       {exitScores && (

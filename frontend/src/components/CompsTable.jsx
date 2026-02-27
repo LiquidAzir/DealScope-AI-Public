@@ -23,7 +23,22 @@ function SortIcon({ active, dir }) {
   )
 }
 
-export default function CompsTable({ comps }) {
+function CompanyBadges({ companyInfo }) {
+  if (!companyInfo) return null
+  const badges = [companyInfo.sector, companyInfo.sub_sector].filter(Boolean)
+  if (badges.length === 0) return null
+  return (
+    <div className="flex flex-wrap gap-1.5 mb-4">
+      {badges.map(b => (
+        <span key={b} className="text-xs font-medium px-2.5 py-1 rounded-md bg-violet-500/10 text-violet-300 border border-violet-500/20">
+          {b}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+export default function CompsTable({ comps, companyInfo }) {
   const [sortKey, setSortKey] = useState('year')
   const [sortDir, setSortDir] = useState('desc')
 
@@ -49,6 +64,8 @@ export default function CompsTable({ comps }) {
   })
 
   return (
+    <div>
+      <CompanyBadges companyInfo={companyInfo} />
     <div className="overflow-x-auto -mx-1">
       <table className="w-full text-sm border-collapse">
         <thead>
@@ -86,6 +103,7 @@ export default function CompsTable({ comps }) {
           ))}
         </tbody>
       </table>
+    </div>
     </div>
   )
 }
