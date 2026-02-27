@@ -241,6 +241,14 @@ export default function App() {
         {/* Search */}
         <InputForm onSubmit={handleSubmit} isRunning={isRunning} onAbort={abort} />
 
+        {/* Agent memory — always visible so judges / users see it immediately */}
+        {!isRunning && (
+          <FeedbackPanel
+            preferences={preferences}
+            onSave={handleSavePreferences}
+          />
+        )}
+
         {/* Pipeline progress */}
         {(isRunning || steps.length > 0 || error) && (
           <ProgressStream steps={steps} isRunning={isRunning} error={error} />
@@ -317,14 +325,6 @@ export default function App() {
               )}
             </div>
           </div>
-        )}
-
-        {/* Memo preferences — shown once a memo is available and pipeline is done */}
-        {!isRunning && displayResult?.memo && (
-          <FeedbackPanel
-            preferences={preferences}
-            onSave={handleSavePreferences}
-          />
         )}
 
         {/* History — shown in idle state or when toggled via Recent button */}
